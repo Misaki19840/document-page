@@ -5,6 +5,7 @@ on:
       - main
     paths:
       - 'docs/**'
+      - 'antora-playbook.yml'
 
 jobs:
   build:
@@ -23,7 +24,7 @@ jobs:
       run: npm i -g @antora/cli@2.3 @antora/site-generator-default@2.3
 
     - name: Build Site with Antora
-      run: antora --fetch docs/antora.yml
+      run: antora antora-playbook.yml
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
