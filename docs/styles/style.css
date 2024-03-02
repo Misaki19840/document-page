@@ -1,0 +1,48 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 20px;
+    color: #333;
+}
+
+h1, h2, h3 {
+    color: #005571;
+}
+
+a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.toc-title {
+    font-size: 24px;
+    color: #444;
+}
+
+.toc, .toc ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.toc li {
+    margin-bottom: 5px;
+}
+
+code {
+    background-color: #f7f7f9;
+    border: 1px solid #e1e1e8;
+    padding: 2px 4px;
+    font-family: monospace;
+    font-size: 90%;
+}
+
+pre {
+    background-color: #f7f7f9;
+    border: 1px solid #e1e1e8;
+    padding: 10px;
+    overflow: auto;
+}

@@ -1,0 +1,27 @@
+= My Project Documentation
+:doctype: article
+:toc: macro
+:toc-title: Table of Contents
+:icons: font
+:source-highlighter: rouge
+:stylesheet: styles/style.css
+
+toc::[]
+
+== Welcome to My Project
+
+Welcome to the documentation for My Project. This guide will help you get started and provide detailed information on how to use the project effectively.
+
+== Getting Started
+
+To get started with My Project, follow these steps:
+
+. Ensure you have all the necessary prerequisites installed.
+. Clone the repository from GitHub.
+. Follow the installation instructions.
+
+For more detailed instructions, see xref:another-page.adoc[Getting Started].
+
+== Contributing
+
+We welcome contributions from the community. Please see our contributing guidelines before submitting a pull request.

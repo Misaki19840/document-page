@@ -1,0 +1,27 @@
+= Getting Started
+:doctype: article
+:icons: font
+:source-highlighter: rouge
+:stylesheet: styles/style.css
+
+== Introduction
+
+This page will guide you through the initial setup and installation of My Project.
+
+== Prerequisites
+
+Before you begin, make sure you have the following installed:
+
+- Requirement 1
+- Requirement 2
+- Requirement 3
+
+== Installation
+
+Follow these steps to install My Project:
+
+. Step 1
+. Step 2
+. Step 3
+
+Congratulations! You have successfully installed My Project. Now, you're ready to start using it.
