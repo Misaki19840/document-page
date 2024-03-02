@@ -1,6 +1,5 @@
 name: my-docs
 version: '1.0'
 title: My Documentation
-start_page: ROOT:index.adoc
 nav:
   - modules/ROOT/nav.adoc
