@@ -1,0 +1,12 @@
+= My Project Documentation
+:page-layout: home
+
+Welcome to the My Project documentation!
+
+== Section Header
+
+Some introduction text here.
+
+== Another Section
+
+More details here.

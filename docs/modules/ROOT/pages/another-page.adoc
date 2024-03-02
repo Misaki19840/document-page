@@ -1,0 +1,8 @@
+= Another Page
+:page-layout: docs
+
+Here's another page in the documentation.
+
+== Section on Another Page
+
+Details for this section.
