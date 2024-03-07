@@ -5,7 +5,7 @@ Welcome to the My Project documentation!
 
 == Section Header
 
-Some introduction text here. Test text.
+Some introduction text here. Test text. Test.
 
 == Another Section
 
