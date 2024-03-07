@@ -7,6 +7,9 @@ on:
       - 'docs/**'
       - 'antora-playbook.yml'
 
+permissions: 
+  contents: write  # This line is added to give write permissions for the repository
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,17 +34,21 @@ jobs:
         npm install lunr asciidoctor
         node src/script.js
 
-    # Optional: Commit search index to the repository
-    - name: Commit Search Index
+    - name: Configure Git
       run: |
         git config --global user.name 'GitHub Actions Bot'
         git config --global user.email 'actions@github.com'
-        git add ui/search-index.json
-        git commit -m "Automatically update search index"
-        git push
+
+    - name: Commit Search Index
+      run: |
+        git add .
+        git commit -m "Update search index"
+        git push --set-upstream origin HEAD
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the default GITHUB_TOKEN
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
-        github_token: ${{ secrets.GH_TOKEN }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./build/site
