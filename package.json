@@ -1,0 +1,12 @@
+{
+    "name": "your-documentation",
+    "version": "1.0.0",
+    "scripts": {
+      "build:index": "node src/script.js"
+    },
+    "dependencies": {
+      "lunr": "^2.3.9",
+      "asciidoctor": "^2.2.4"
+    }
+  }
+  

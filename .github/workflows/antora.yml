@@ -26,9 +26,9 @@ jobs:
     - name: Build Site with Antora
       run: antora antora-playbook.yml
 
-    - name: Install Lunr and Generate Search Index
+    - name: Install Lunr and Asciidoctor.js
       run: |
-        npm install lunr
+        npm install lunr asciidoctor
         node src/script.js
 
     # Optional: Commit search index to the repository
