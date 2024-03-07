@@ -1,26 +1,31 @@
 const lunr = require('lunr');
 const fs = require('fs');
 const path = require('path');
-const asciidoctor = require('asciidoctor')(); // Only necessary if you're indexing AsciiDoc directly
+const asciidoctor = require('asciidoctor')();
 
 function indexDocs() {
   const documents = [];
-  const files = fs.readdirSync('../docs/modules/ROOT/pages');
+  // Correct the path to be relative from the root of your repository
+  const pagesPath = './docs/modules/ROOT/pages';
+  const files = fs.readdirSync(pagesPath);
 
   files.forEach(file => {
-    const filePath = path.join('../docs/modules/ROOT/pages', file);
-    const content = fs.readFileSync(filePath, 'utf8');
-    const doc = asciidoctor.load(content); // Convert AsciiDoc to HTML if necessary
-    const html = doc.convert(); // Get the HTML content
+    // Make sure to only process .adoc files
+    if (path.extname(file) === '.adoc') {
+      const filePath = path.join(pagesPath, file);
+      const content = fs.readFileSync(filePath, 'utf8');
+      const doc = asciidoctor.load(content); // Convert AsciiDoc to HTML
+      const html = doc.convert(); // Get the HTML content
 
-    // Here you would extract the text content from the HTML
-    // You can use a library like JSDOM or Cheerio to help with this
+      // Extract text content from the HTML
+      // Use a library like JSDOM or Cheerio to help with this if necessary
 
-    documents.push({
-      'id': file,
-      'title': doc.getDocumentTitle(),
-      'text': html, // You would put the text content here, not the HTML
-    });
+      documents.push({
+        'id': file,
+        'title': doc.getDocumentTitle(),
+        'text': html, // Extract the text content, not the HTML
+      });
+    }
   });
 
   const idx = lunr(function () {
@@ -28,12 +33,11 @@ function indexDocs() {
     this.field('title', { boost: 10 });
     this.field('text');
 
-    documents.forEach(function (doc) {
-      this.add(doc);
-    }, this);
+    documents.forEach(doc => this.add(doc));
   });
 
-  fs.writeFileSync('../ui/search-index.json', JSON.stringify(idx));
+  // Correct the output path to be relative from the root of your repository
+  fs.writeFileSync('./ui/search-index.json', JSON.stringify(idx));
 }
 
 indexDocs();
