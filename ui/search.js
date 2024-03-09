@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
     // Download the search index
     function loadIndex() {
-      return fetch('path/to/search-index.json')
+      return fetch('./ui/search-index.json')
         .then(response => response.json())
         .then(function(rawIndex) {
           pagesIndex = rawIndex;
