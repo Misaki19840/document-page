@@ -5,7 +5,7 @@
     "build:index": "node src/script.js"
   },
   "dependencies": {
-    "asciidoctor": "^2.2.6",
+    "asciidoctor": "^2.2.7",
     "lunr": "^2.3.9"
   }
 }

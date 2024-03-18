@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>langchainを使ったキーワード検索 :: My Documentation Site</title>
+    <link rel="canonical" href="https://misaki19840.github.io/document-page/my-docs/1.0/langchain_serch_keyword.html">
+    <meta name="generator" content="Antora 2.3.4">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://misaki19840.github.io/document-page">My Documentation Site</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="my-docs" data-version="1.0">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="index.html">My Documentation</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="index.html">Home</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="another-page.html">Another Page</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">My Documentation</span>
+    <span class="version">1.0</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="index.html">My Documentation</a></div>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="index.html">1.0</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="index.html">My Documentation</a></li>
+    <li><a href="langchain_serch_keyword.html">langchainを使ったキーワード検索</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="https://github.com/Misaki19840/document-page/edit/main/docs/modules/ROOT/pages/langchain_serch_keyword.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">langchainを使ったキーワード検索</h1>
+<div id="toc" class="toc">
+<div id="toctitle">目次</div>
+<ul class="sectlevel1">
+<li><a href="#_概要">1. 概要</a></li>
+<li><a href="#_事前準備">2. 事前準備</a></li>
+<li><a href="#_文章をチャンクごとにdbに保存">3. 文章をチャンクごとにDBに保存</a></li>
+<li><a href="#_キーワードから文章を取得する">4. キーワードから文章を取得する</a></li>
+<li><a href="#_文章を要約して回答する">5. 文章を要約して回答する</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="_概要"><a class="anchor" href="#_概要"></a>1. 概要</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>元文章をデータベースに保存し、その文章をもとにユーザの質問に回答する例を示す。
+本例では、日本国憲法の条文を元に、「天皇は世襲ですか？」という質問に回答する例を示す。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_事前準備"><a class="anchor" href="#_事前準備"></a>2. 事前準備</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>OpenAIからAPIキーを取得する。</p>
+</li>
+<li>
+<p>日本国憲法の条文をテキストに保存し、japan_constitution.txtと名前を付ける。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_文章をチャンクごとにdbに保存"><a class="anchor" href="#_文章をチャンクごとにdbに保存"></a>3. 文章をチャンクごとにDBに保存</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>OpenAPIのキーと、文章のテキストファイルを読み込む。文章は、チャンクごとにテキストを読み込み、ChromaというDBに保存する。チャンクごとに区切った文章を見ると、条項ごとに区切られていることが分かる。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">import os
+os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
+
+from langchain.document_loaders import TextLoader
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.vectorstores import Chroma
+
+documents = TextLoader('./japan_constitution.txt').load()
+
+text_splitter = CharacterTextSplitter(
+    chunk_size=100,
+    chunk_overlap=0,
+    separator="\n\n"
+)
+
+# save splitted document
+documents = text_splitter.split_documents(documents)
+db = Chroma.from_documents(documents, OpenAIEmbeddings(), persist_directory='testdb')
+
+documents</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>&gt;&gt;
+[Document(page_content='〔天皇の地位と主権在民〕\n第一条\u3000天皇は、日本国の象徴であり日本国民統合の象徴であつて、この地位は、主権の存する日本国民の総意に基く。', metadata={'source': './japan_constitution.txt'}),
+ Document(page_content='〔皇位の世襲〕\n第二条\u3000皇位は、世襲のものであつて、国会の議決した皇室典範の定めるところにより、これを継承する。', metadata={'source': './japan_constitution.txt'}),..]</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_キーワードから文章を取得する"><a class="anchor" href="#_キーワードから文章を取得する"></a>4. キーワードから文章を取得する</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>次に、キーワードを指定し、文章を検索する。検索結果から、キーワードに近い条項の文章が検索されていることが分かる。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">keyword = "天皇　世襲"
+docs = db.similarity_search(keyword)
+related_content = docs[0].page_content
+related_content</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>&gt;&gt;
+〔皇位の世襲〕
+第二条　皇位は、世襲のものであつて、国会の議決した皇室典範の定めるところにより、これを継承する。</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_文章を要約して回答する"><a class="anchor" href="#_文章を要約して回答する"></a>5. 文章を要約して回答する</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>最後に、LLMに文章を要約して回答するよう指示する。LLMの回答を見ると、文章に基づいて回答を作成していることが分かる。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">content = ("あなたの役割は,元テキストを要約してユーザの質問に答えることです。以下の元テキストからユーザの質問に回答してください。"
+            + f"(元テキスト)"
+            + f"{related_content}"
+            + f"(ユーザの質問)"
+            + f"{question}")</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY"),
+)
+
+response = client.chat.completions.create(
+    messages=[
+        {
+            "role": "user",
+            "content": content,
+        }
+    ],
+    model="gpt-3.5-turbo",
+)
+
+response.choices[0].message.content</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>&gt;&gt;
+はい、天皇は世襲であり、国会の議決した皇室典範の定めるところにより、皇位を継承しています。</pre>
+</div>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>
