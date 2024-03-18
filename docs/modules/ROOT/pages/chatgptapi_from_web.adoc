@@ -1,4 +1,4 @@
-= WebからchatGPTAPIを呼ぶ
+= WebページにChatGPTの返答を表示
 :page-layout: docs
 :toc:
 :sectnums:
