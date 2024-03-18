@@ -1,0 +1,285 @@
+= SHAPの応用例（予測モデルの説明＋データのクラスタ分析）
+:page-layout: docs
+:toc:
+:sectnums:
+:toclevels: 5
+:toc-title: 目次
+:imagesdir: ../../../attachments
+
+== 概要
+
+SHAPを使った応用例を示す。
+例えば、住宅の価格と、いくつかの属性（緯度、経度など）のデータがあるとする。この時、住宅の価格と関連がある属性を明らかにし、その属性を使ってデータをクラスタに分類することを考える。クラスタとして分類することで、マーケティングの対象を決定するなど、ビジネスへの応用ができると考えている。
+
+本稿で使用するデータおよび、手法は以下の通りである。
+
+[cols="2"]
+|===
+|データ
+|カリフォルニア住宅価格
+
+|価格の予測
+|lightGBM
+
+|予測モデルの説明
+|SHAP
+
+|クラスタ分析
+|K-means
+
+|===
+
+== 価格の予測
+
+カリフォルニア住宅価格のデータを使用し、価格を予測するモデルを作成する。
+
+[source,python]
+----
+import pandas as pd
+import lightgbm as lgb
+import shap
+import sklearn.datasets
+from sklearn.model_selection import train_test_split
+
+# Load California housing data
+data = sklearn.datasets.fetch_california_housing()
+X, y = pd.DataFrame(data.data, columns=data.feature_names), pd.Series(data.target, name='Price')
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train a LightGBM model
+gbm = lgb.LGBMRegressor(num_leaves=31, learning_rate=0.05, n_estimators=100)
+gbm.fit(X_train, y_train, eval_set=[(X_test, y_test)], eval_metric='l2')
+----
+
+== 予測モデルの説明
+=== 予測モデルの説明（全体）
+予測モデルに対して、特徴量の寄与度を調べることでモデルの説明を行う。
+
+[source,python]
+----
+explainer = shap.Explainer(gbm)
+shap_values = explainer(X)
+----
+
+どの特徴が重要かは、barグラフで確認する。
+グラフから、MedInc, Latitude, Longitude, AveOccupが特に重要であることが分かった。
+
+[source,python]
+----
+shap.summary_plot(shap_values, X, plot_type="bar")
+----
+
+image::analyze_data_with_SAP_01_bar.png[]
+
+sklearnのドキュメントページより、各特徴量は以下のように説明される。
+
+[cols="2"]
+|===
+|MedInc
+|区画における収入の中央値
+
+|Latitude
+|区画の緯度
+
+|Longitude
+|区画の経度
+
+|AveOccup
+|区画における世帯あたりの人数の平均値
+
+|===
+
+特徴量ごとに、目的変数との関係を把握するには、デフォルトのプロットで行う。
+グラフから、MedIncが高いほど目的変数が高い、Latitudeが低いほど目的変数が低い、という関係があることが分かる。
+
+[source,python]
+----
+shap.summary_plot(shap_values, X)
+----
+
+image::analyze_data_with_SAP_01_summary.png[]
+
+=== 予測モデルの説明（個別）
+
+補足として、”MedIncが高いほど目的変数が高い”のか、実際のデータを使って確認する。
+MedIncが最も高いデータを取得し、そのデータをwaterfallプロットで描画する。
+すると、確かにMedIncの値が目的変数の値を押し上げていることが確認できた。
+
+[source,python]
+----
+X.reset_index(drop=True).sort_values('MedInc', ascending=False).head(1)
+## an index of the output is 4352
+
+shap.plots.waterfall(shap_values[4352])
+----
+
+image::analyze_data_with_SAP_02_waterfall_01.png[]
+
+同様に、”Latitudeが低いほど目的変数が低い”のか、実際のデータを使って確認する。
+Latitudeが最も低いデータを取得し、そのデータをwaterfallプロットで描画する。
+すると、確かにLatitudeによって目的変数の値が小さくなっていることが確認できた。
+
+[source,python]
+----
+X.reset_index(drop=True).sort_values('Latitude', ascending=False).head(1)
+## an index of the output is 1859
+
+shap.plots.waterfall(shap_values[1859])
+----
+
+image::analyze_data_with_SAP_02_waterfall_02.png[]
+
+== クラスタ分析
+=== クラスタの作成
+
+価格の高いデータに対して、似た特徴を持つデータ別にクラスタリングを行う。
+
+まず、価格の高いデータを抽出する。全データの平均よりも高い価格のデータを抽出した。結果、全体が約2万件あるのに対して、価格の高いデータは約8千件あることが分かった。
+
+[source,python]
+----
+import numpy as np
+import sklearn.datasets
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Load California housing data
+data = sklearn.datasets.fetch_california_housing()
+X_full = pd.DataFrame(data.data, columns=data.feature_names)
+y_full = pd.Series(data.target, name='Price')
+
+# Calculate the average price
+average_price = np.mean(y_full)
+
+# Filter the dataset for rows with a price higher than the average
+high_price_indices = y_full > average_price
+X_high_price = X_full[high_price_indices]
+y_high_price = y_full[high_price_indices]
+
+print("original size: " + str(len(X_full)))
+print("price higher than mean size: " + str(len(X_high_price)))
+----
+
+----
+>>
+original size: 20640
+price higher than mean size: 8385
+----
+
+次に、クラスタリングを行う前処理として、最適なクラスタ数を決めるためにエルボー法を行う。グラフから、3が最適なクラスタ数であることが分かった。
+
+[source,python]
+----
+# Proceed with scaling
+scaler = StandardScaler()
+X_high_price_scaled = scaler.fit_transform(X_high_price[['MedInc', 'Latitude', 'Longitude', 'AveOccup']])
+
+inertia = []
+for n in range(1, 11):
+    kmeans = KMeans(n_clusters=n, random_state=42).fit(X_high_price_scaled)
+    inertia.append(kmeans.inertia_)
+
+plt.plot(range(1, 11), inertia)
+plt.title('Elbow Method')
+plt.xlabel('Number of clusters')
+plt.ylabel('Inertia')
+plt.show()
+----
+
+image::analyze_data_with_SAP_03_elbow.png[]
+
+次に、クラスタ数を3として、クラスタリングを行う。クラスタごとに特徴量の統計値、データ数を調べる。すると、クラスタ2に属するデータは、AveOccupの値が高いデータあり、1件しかないことが分かった。
+
+[source,python]
+----
+k = 3
+kmeans = KMeans(n_clusters=k, random_state=42)
+clusters = kmeans.fit_predict(X_high_price_scaled)
+
+X_high_price['Cluster'] = clusters
+
+# analyze the clusters
+print("mean values")
+print(X_high_price[['MedInc', 'Latitude', 'Longitude', 'AveOccup', 'Cluster']].groupby('Cluster').mean())
+print("data size of each cluster")
+print(X_high_price[['MedInc', 'Cluster']].groupby('Cluster').count())
+----
+
+----
+>>
+mean values
+           MedInc   Latitude   Longitude    AveOccup
+Cluster                                             
+0        5.116096  37.607795 -122.108392    2.746874
+1        5.114409  33.890525 -118.171516    2.698469
+2        4.263900  35.320000 -120.700000  502.461538
+data size of each cluster
+         MedInc
+Cluster        
+0          3352
+1          5032
+2             1
+----
+
+=== クラスタの解釈
+
+クラスタ0,1の違いは何か調べるため、特徴量ごとのペアプロットを行う。クラスごとの度数分布で緯度経度に注目すると、クラスタ0は北西、クラスタ1は南東に位置するということが分かった。
+
+[source,python]
+----
+import seaborn as sns
+
+pair_plot = sns.pairplot(X_high_price, vars=['MedInc', 'Latitude', 'Longitude', 'AveOccup'], hue='Cluster', palette='bright')
+
+# some height>1 to make room for the title
+pair_plot.fig.suptitle("Scatter plots of Clusters", y=1.02) # y= 
+plt.show()
+----
+
+image::analyze_data_with_SAP_03_pair_plot.png[]
+
+更にデータを理解するために、地図上にクラスタごとに緯度経度をプロットする。プロットから、クラスタ0はサンフランシスコを中心とした地域、クラスタ2はロサンゼルスを中心とした地域であることが分かる。
+
+[source,python]
+----
+import folium
+
+california_map = folium.Map(location=[36.7783, -119.4179], zoom_start=6)
+
+# Define a color map for clusters
+cluster_colors = {0: 'blue', 1: 'orange', 2: 'green'}
+
+# Add points for each row in the DataFrame
+for idx, row in X_high_price.iterrows():
+    # Use the cluster label to determine the color
+    marker_color = cluster_colors.get(row['Cluster'], 'gray')  # Default to gray if cluster label is not 0, 1, or 2
+    folium.CircleMarker([row['Latitude'], row['Longitude']],
+                        radius=2,
+                        color=marker_color,
+                        fill=True,
+                        fill_color=marker_color,
+                        fill_opacity=0.5,
+                        ).add_to(california_map)
+
+# Display the map
+california_map
+----
+
+image::analyze_data_with_SAP_04_plot_map.png[]
+
+まとめると、各クラスタは以下のように説明されることが分かった。
+
+[cols="2"]
+|===
+|クラスタ0
+|サンフランシスコを中心とした地域。収入の平均値は5.1。世帯人数の平均値は2.7。
+
+|クラスタ1
+|ロサンゼルスを中心とした地域。収入の平均値は5.1。世帯人数の平均値は2.7。
+
+|クラスタ2
+|世帯人数の平均値が502と高すぎる。異常データ？特殊なケース？
+
+|===

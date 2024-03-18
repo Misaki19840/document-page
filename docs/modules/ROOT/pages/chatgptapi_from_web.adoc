@@ -1,0 +1,241 @@
+= WebからchatGPTAPIを呼ぶ
+:page-layout: docs
+:toc:
+:sectnums:
+:toclevels: 5
+:toc-title: 目次
+:imagesdir: ../../../attachments
+
+== 概要
+
+webでテキストを送信してchatGPT APIに入力、得られた出力をwebに表示する例を示す。
+
+image::chatgptapi_from_web_01.png[]
+
+== 構成
+
+- S3（htmlを置く。webページをホスト用）
+- API Gateway（webページ⇔lamda）
+- lambda（lamda⇔ChatGPTのAPI）
+
+image::chatgptapi_from_web_02.png[]
+
+== 事前準備
+
+- chatGPTのAPI利用キーを発行しておく
+
+== lambda
+=== openAIのライブラリをレイヤーに設定
+
+openAIのライブラリをダウンロードしてzipにする。
+
+[source,python]
+----
+mkdir python
+pip install -t ./python fastapi==0.99.0 openai
+zip -r openai.zip ./python
+----
+
+環境変数に以下を設定しておく。
+
+- openai_key: chatGPT APIのキー（事前準備で取得）
+- cros_origin: APIのエンドポイント（これから取得）
+
+lamndaのレイヤーにzipをアップロードする。
+
+image::chatgptapi_from_web_04-01.png[]
+
+=== lambda関数
+
+以下のように記述。
+
+[source,python]
+----
+import json
+import os
+from openai import OpenAI
+
+def lambda_handler(event, context):
+    if event['httpMethod'] == 'OPTIONS':
+        # Preflight request
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': os.environ['cros_origin'],
+            },
+            'body': json.dumps({'message': 'Preflight call successful'})
+        }
+    else:
+        client = OpenAI(
+            api_key=os.environ['openai_key'],
+        )
+        
+        json_body = json.loads(event.get('body', '{}'))
+        
+        if 'key1' in json_body:
+            message_content = "" + json_body['key1']
+        else:
+            message_content = "Say hello!"  # for test
+            
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": message_content,
+                }
+            ],
+            model="gpt-3.5-turbo",
+        )
+        
+        text = chat_completion.choices[0].message.content
+        
+        return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': os.environ['cros_origin'],
+        },
+        'body': json.dumps({'text': text, 'original':message_content})
+        }
+----
+
+=== lambdaのレイヤー設定
+
+lambdaにレイヤーを設定する。
+
+image::chatgptapi_from_web_04-02.png[]
+
+== APIGateway
+=== APIGatewayの作成
+
+API Gatewayを設定してlambdaの前に置く。以下の設定を使用。
+
+- プロトコル: HPPT
+
+image::chatgptapi_from_web_05-01.png[]
+
+=== CROSの設定
+
+APIのCROSを設定する。（APIをS3で設定するwebページからアクセスする際に必要）
+Access-Control-Allow-Originには、S3で設定するwebページのURLを設定。
+
+image::chatgptapi_from_web_05-02.png[]
+
+== S3
+=== バケットを作成、公開
+
+バケットを作成しwebサイトとして公開する。AWS公式解説を参照。
+https://docs.aws.amazon.com/ja_jp/AmazonS3/latest/userguide/WebsiteAccessPermissionsReqd.html[link]
+
+完了後、静的ウェブホスティングの項目に、webページのURLが表示される。
+
+image::chatgptapi_from_web_05-03.png[]
+
+=== コンテンツの配置
+
+以下のhtmlを作成する。API gatewayのエンドポイントには、正しいものを入力する。作成後、ファイルをバケットに置く。
+
+index.html
+[source,html]
+----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with OpenAI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7f7f7;
+        }
+
+        #chat-container {
+            width: 80%;
+            max-width: 350px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #messageInput {
+            width: calc(100% - 42px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #4cae4c;
+        }
+
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #eee;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <input type="text" id="messageInput" placeholder="Type your message here...">
+        <button onclick="sendMessage()">Send</button>
+        <div id="response"></div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const message = document.getElementById('messageInput').value;
+            const responseContainer = document.getElementById('response');
+            responseContainer.innerText = '...';
+
+            try {
+                const response = await fetch('### API Gateway endpoont ###', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ key1: message })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                responseContainer.innerText = '' + data.text;
+            } catch (error) {
+                console.error('Error:', error);
+                responseContainer.innerText = 'Failed to get response: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
+----
+
+== テスト
+
+webページのURLにアクセスし、テキストボックスに値を入れて送信。返答が帰ってくれば成功。
+
+image::chatgptapi_from_web_01.png[]

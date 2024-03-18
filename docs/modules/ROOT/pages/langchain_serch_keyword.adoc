@@ -1,0 +1,109 @@
+= langchainを使ったキーワード検索
+:page-layout: docs
+:toc:
+:sectnums:
+:toclevels: 5
+:toc-title: 目次
+:imagesdir: ../../../attachments
+
+== 概要
+
+元文章をデータベースに保存し、その文章をもとにユーザの質問に回答する例を示す。
+本例では、日本国憲法の条文を元に、「天皇は世襲ですか？」という質問に回答する例を示す。
+
+== 事前準備
+
+- OpenAIからAPIキーを取得する。
+- 日本国憲法の条文をテキストに保存し、japan_constitution.txtと名前を付ける。
+
+== 文章をチャンクごとにDBに保存
+
+OpenAPIのキーと、文章のテキストファイルを読み込む。文章は、チャンクごとにテキストを読み込み、ChromaというDBに保存する。チャンクごとに区切った文章を見ると、条項ごとに区切られていることが分かる。
+
+[source,python]
+----
+import os
+os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
+
+from langchain.document_loaders import TextLoader
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.vectorstores import Chroma
+
+documents = TextLoader('./japan_constitution.txt').load()
+
+text_splitter = CharacterTextSplitter(
+    chunk_size=100,
+    chunk_overlap=0,
+    separator="\n\n"
+)
+
+# save splitted document
+documents = text_splitter.split_documents(documents)
+db = Chroma.from_documents(documents, OpenAIEmbeddings(), persist_directory='testdb')
+
+documents
+----
+
+----
+>>
+[Document(page_content='〔天皇の地位と主権在民〕\n第一条\u3000天皇は、日本国の象徴であり日本国民統合の象徴であつて、この地位は、主権の存する日本国民の総意に基く。', metadata={'source': './japan_constitution.txt'}),
+ Document(page_content='〔皇位の世襲〕\n第二条\u3000皇位は、世襲のものであつて、国会の議決した皇室典範の定めるところにより、これを継承する。', metadata={'source': './japan_constitution.txt'}),..]
+----
+
+== キーワードから文章を取得する
+
+次に、キーワードを指定し、文章を検索する。検索結果から、キーワードに近い条項の文章が検索されていることが分かる。
+
+[source,python]
+----
+keyword = "天皇　世襲" 
+docs = db.similarity_search(keyword)
+related_content = docs[0].page_content
+related_content
+----
+
+----
+>>
+〔皇位の世襲〕
+第二条　皇位は、世襲のものであつて、国会の議決した皇室典範の定めるところにより、これを継承する。
+----
+
+== 文章を要約して回答する
+
+最後に、LLMに文章を要約して回答するよう指示する。LLMの回答を見ると、文章に基づいて回答を作成していることが分かる。
+
+[source,python]
+----
+content = ("あなたの役割は,元テキストを要約してユーザの質問に答えることです。以下の元テキストからユーザの質問に回答してください。"
+            + f"(元テキスト)"
+            + f"{related_content}"
+            + f"(ユーザの質問)"
+            + f"{question}")
+----
+
+[source,python]
+----
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY"),
+)
+
+response = client.chat.completions.create(
+    messages=[
+        {
+            "role": "user",
+            "content": content,
+        }
+    ],
+    model="gpt-3.5-turbo",
+)
+
+response.choices[0].message.content
+----
+
+----
+>>
+はい、天皇は世襲であり、国会の議決した皇室典範の定めるところにより、皇位を継承しています。
+----
